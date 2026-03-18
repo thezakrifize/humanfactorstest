@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Human Factors Quiz</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --primary: #2563eb;
+      --primary-soft: #dbeafe;
+      --correct: #166534;
+      --correct-bg: #dcfce7;
+      --wrong: #991b1b;
+      --wrong-bg: #fee2e2;
+      --border: #e5e7eb;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+    }
+
+    .container {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #eff6ff, #ffffff);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+    }
+
+    .sub {
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin: 18px 0 24px;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-secondary {
+      background: white;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      opacity: 0.96;
+    }
+
+    .score-box {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px 18px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .score-box.show { display: block; }
+
+    .quiz-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.03);
+    }
+
+    .question-number {
+      color: var(--primary);
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .question-text {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 14px;
+    }
+
+    .options {
+      display: grid;
+      gap: 10px;
+    }
+
+    .option {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #fff;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .option:hover {
+      border-color: #c7d2fe;
+      background: #fafcff;
+    }
+
+    .option input {
+      margin-top: 4px;
+      accent-color: var(--primary);
+    }
+
+    .option.correct {
+      border-color: #86efac;
+      background: var(--correct-bg);
+      color: var(--correct);
+    }
+
+    .option.wrong {
+      border-color: #fca5a5;
+      background: var(--wrong-bg);
+      color: var(--wrong);
+    }
+
+    .option.disabled {
+      pointer-events: none;
+    }
+
+    .feedback {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-weight: 600;
+      display: none;
+    }
+
+    .feedback.correct {
+      display: block;
+      background: var(--correct-bg);
+      color: var(--correct);
+    }
+
+    .feedback.wrong {
+      display: block;
+      background: var(--wrong-bg);
+      color: var(--wrong);
+    }
+
+    .explanation {
+      margin-top: 8px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    
+
+    @media (max-width: 640px) {
+      .container { padding: 16px; }
+      h1 { font-size: 26px; }
+      .question-text { font-size: 17px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Human Factors Quiz</h1>
+      <p class="sub">เลือกคำตอบแล้วระบบจะบอกทันทีว่าถูกหรือผิด พร้อมเฉลยและคำอธิบายสั้น ๆ</p>
+      <div class="toolbar">
+        <button class="btn-primary" onclick="checkAllAnswers()">ตรวจคะแนนทั้งหมด</button>
+        <button class="btn-secondary" onclick="resetQuiz()">เริ่มใหม่</button>
+      </div>
+      <div id="scoreBox" class="score-box"></div>
+    </div>
+
+    <div id="quiz"></div>
+  
+  </div>
+
+  <script>
+    const quizData = [
+      {
+        q: 'Which era focused mostly on the concept of pilot error?',
+        choices: ['Technical Era', 'Human Factors Era', 'Organizational Era', 'Safety Culture Era'],
+        answer: 1,
+        explanation: 'คำว่า pilot error หรือ human error ถูกเน้นมากใน Human Factors Era'
+      },
+      {
+        q: 'In the SHELL Model, what does the “E” stand for?',
+        choices: ['Equipment', 'Environment', 'Error', 'Engineering'],
+        answer: 1,
+        explanation: 'E = Environment เช่น noise, temperature, workspace conditions'
+      },
+      {
+        q: 'Monitoring an automated system during a long quiet night shift requires which type of attention?',
+        choices: ['Divided attention', 'Selective attention', 'Sustained attention (Vigilance)', 'Alternating attention'],
+        answer: 2,
+        explanation: 'งานเฝ้าระวังนาน ๆ ต้องใช้ sustained attention หรือ vigilance'
+      },
+      {
+        q: 'What does the “C” stand for in the Assertiveness Strategy?',
+        choices: ['Communicate', 'Confirm', 'Challenge', 'Control'],
+        answer: 2,
+        explanation: 'C = Challenge'
+      },
+      {
+        q: 'An unintended execution failure such as inputting 080 instead of 090 is known as?',
+        choices: ['Mistake', 'Violation', 'Slip', 'Lapse'],
+        answer: 2,
+        explanation: 'Slip คือทำผิดตอน execution แม้ intention เดิมจะถูก'
+      },
+      {
+        q: 'Deliberate deviation from safe operating procedures is defined as?',
+        choices: ['Error', 'Mistake', 'Slip', 'Violation'],
+        answer: 3,
+        explanation: 'Violation คือจงใจไม่ทำตาม procedure'
+      },
+      {
+        q: 'In Threat and Error Management (TEM), which strategy is used to catch active errors during execution?',
+        choices: ['Avoid', 'Detect', 'Trap', 'Tolerate'],
+        answer: 2,
+        explanation: 'Trap = ดักจับ error ก่อนลุกลามเป็น undesired state'
+      },
+      {
+        q: 'What is Situational Awareness (SA) Level 1?',
+        choices: ['Projection', 'Perception', 'Comprehension', 'Decision'],
+        answer: 1,
+        explanation: 'Endsley SA Level 1 = Perception of elements in the environment'
+      },
+      {
+        q: 'Seeking information that supports existing beliefs while ignoring contradictory evidence is called?',
+        choices: ['Anchoring', 'Confirmation bias', 'Fixation', 'Availability bias'],
+        answer: 1,
+        explanation: 'Confirmation bias = เลือกข้อมูลที่สนับสนุนความเชื่อเดิม'
+      },
+      {
+        q: 'Which decision-making strategy is best for a highly stable environment and relies on past experience?',
+        choices: ['Analytical comparison', 'Recognition-Primed Decision (RPD)', 'Guesswork', 'Random trial'],
+        answer: 1,
+        explanation: 'RPD ใช้ pattern recognition จากประสบการณ์เดิม'
+      },
+      {
+        q: 'Overrelying on the first piece of information is known as?',
+        choices: ['Confirmation bias', 'Fixation', 'Anchoring', 'Framing'],
+        answer: 2,
+        explanation: 'Anchoring = ติดอยู่กับข้อมูลแรก'
+      },
+      {
+        q: 'The Window of Circadian Low (WOCL) typically occurs between which hours?',
+        choices: ['00:00–03:00', '01:00–04:00', '02:00–05:00', '03:00–06:00'],
+        answer: 2,
+        explanation: 'ช่วง alertness ต่ำสุดมักอยู่ราว 02:00–05:00'
+      },
+      {
+        q: 'What is the brain’s most effective strategy for reducing workload?',
+        choices: ['Multitasking', 'Transforming tasks into automatic processing', 'Ignoring noncritical tasks', 'Working faster'],
+        answer: 1,
+        explanation: 'เมื่อ task กลายเป็น automatic processing จะลด mental workload ได้มาก'
+      },
+      {
+        q: 'Which safety culture pillar describes an atmosphere of trust that separates acceptable from unacceptable behavior?',
+        choices: ['Reporting culture', 'Just culture', 'Flexible culture', 'Learning culture'],
+        answer: 1,
+        explanation: 'Just culture คือ trust + accountability ที่แยก acceptable/unacceptable behavior'
+      },
+      {
+        q: 'At which maturity level of safety culture do people believe safety is “how we do business around here”?',
+        choices: ['Reactive', 'Calculative', 'Proactive', 'Generative'],
+        answer: 3,
+        explanation: 'Generative คือ safety ฝังอยู่ในวิธีทำงานประจำวันแล้ว'
+      },
+      {
+        q: 'According to the Swiss Cheese Model, which is considered an organizational factor?',
+        choices: ['Unsafe acts', 'Preconditions for unsafe acts', 'Organizational influences', 'Operator fatigue only'],
+        answer: 2,
+        explanation: 'Organizational influences คือชั้นบนสุดของปัจจัยระดับองค์กร'
+      },
+      {
+        q: 'Based on the Swiss Cheese Model, when does a serious incident occur?',
+        choices: ['When one person makes an error', 'When hazards pass through aligned defense layers', 'When a checklist is skipped once', 'When equipment is old'],
+        answer: 1,
+        explanation: 'เหตุร้ายเกิดเมื่อ holes ในหลายชั้นเรียงตรงกันจน hazard ผ่านได้'
+      },
+      {
+        q: 'Workspace layout, noise, and temperature in the SHELL Model fall under which category?',
+        choices: ['Liveware', 'Software', 'Hardware', 'Environment'],
+        answer: 3,
+        explanation: 'สิ่งแวดล้อมการทำงานอยู่ในหมวด Environment'
+      },
+      {
+        q: 'Filtering routine data into critical or urgent NOTAM is an example of which type of attention?',
+        choices: ['Divided attention', 'Sustained attention', 'Selective attention', 'Alternating attention'],
+        answer: 2,
+        explanation: 'Selective attention = คัดสิ่งสำคัญจากข้อมูลจำนวนมาก'
+      },
+      {
+        q: 'Under high workload or stress, focusing only on one issue while ignoring others is known as?',
+        choices: ['Fixation', 'Situational awareness', 'Adaptation', 'Resilience'],
+        answer: 0,
+        explanation: 'Fixation คือจดจ่อกับเรื่องเดียวจนพลาดข้อมูลอื่น'
+      }
+    ];
+
+    const quizEl = document.getElementById('quiz');
+    const scoreBox = document.getElementById('scoreBox');
+
+    function renderQuiz() {
+      quizEl.innerHTML = '';
+      quizData.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = 'quiz-card';
+        card.innerHTML = `
+          <div class="question-number">ข้อ ${index + 1}</div>
+          <div class="question-text">${item.q}</div>
+          <div class="options" id="options-${index}">
+            ${item.choices.map((choice, i) => `
+              <label class="option" data-q="${index}" data-i="${i}">
+                <input type="radio" name="q${index}" value="${i}" onchange="checkSingle(${index})" />
+                <span><strong>${String.fromCharCode(65 + i)}.</strong> ${choice}</span>
+              </label>
+            `).join('')}
+          </div>
+          <div class="feedback" id="feedback-${index}"></div>
+        `;
+        quizEl.appendChild(card);
+      });
+    }
+
+    function checkSingle(index) {
+      const selected = document.querySelector(`input[name="q${index}"]:checked`);
+      if (!selected) return;
+
+      const chosen = Number(selected.value);
+      const correct = quizData[index].answer;
+      const options = document.querySelectorAll(`#options-${index} .option`);
+      const feedback = document.getElementById(`feedback-${index}`);
+
+      options.forEach((opt, i) => {
+        opt.classList.add('disabled');
+        opt.classList.remove('correct', 'wrong');
+        if (i === correct) opt.classList.add('correct');
+        if (i === chosen && i !== correct) opt.classList.add('wrong');
+      });
+
+      if (chosen === correct) {
+        feedback.className = 'feedback correct';
+        feedback.innerHTML = `✅ ถูกต้อง<br><div class="explanation">${quizData[index].explanation}</div>`;
+      } else {
+        feedback.className = 'feedback wrong';
+        feedback.innerHTML = `❌ ยังไม่ถูก — เฉลยคือ <strong>${String.fromCharCode(65 + correct)}. ${quizData[index].choices[correct]}</strong><br><div class="explanation">${quizData[index].explanation}</div>`;
+      }
+    }
+
+    function checkAllAnswers() {
+      let answered = 0;
+      let score = 0;
+
+      quizData.forEach((item, index) => {
+        const selected = document.querySelector(`input[name="q${index}"]:checked`);
+        if (selected) {
+          answered++;
+          if (Number(selected.value) === item.answer) score++;
+        }
+      });
+
+      scoreBox.classList.add('show');
+      scoreBox.innerHTML = `
+        <strong>คะแนนปัจจุบัน: ${score} / ${quizData.length}</strong><br>
+        ทำแล้ว ${answered} ข้อ จากทั้งหมด ${quizData.length} ข้อ
+      `;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function resetQuiz() {
+      renderQuiz();
+      scoreBox.classList.remove('show');
+      scoreBox.innerHTML = '';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    renderQuiz();
+  </script>
+</body>
+</html>
